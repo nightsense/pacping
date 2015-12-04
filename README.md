@@ -3,7 +3,7 @@ Compare response times of Arch Linux mirrors.
 
 ## usage
 
-pacping [country code] [protocol] [ipv]
+`pacping [country code] [protocol] [ipv]`
 
 examples:
 - `pacping all http 4` will compare http/ipv4 servers in all countries
@@ -11,9 +11,11 @@ examples:
 
 ## country code
 
-[country code] may be set to `all` (to compare mirrors across the world), or to a specific two-letter country code (to compare mirrors within a single country).
+[country code] may be set to:
+- `all` (to compare mirrors across the world)
+- a specific two-letter country code (to compare mirrors within a single country).
 
-Run `pacping --country-codes` for an up-to-date list of countries hosting Arch mirrors, along with their codes.
+Run `pacping --country-codes` for an up-to-date list of countries hosting Arch mirrors, along with their country codes.
 
 ## protocol
 
