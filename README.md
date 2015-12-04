@@ -9,6 +9,8 @@ examples:
 - `pacping all http 4` will compare http/ipv4 servers in all countries
 - `pacping IS https 6` will compare https/ipv6 servers in Iceland
 
+Response times are reported in milliseconds. Each is the average of three pings.
+
 ## country code
 
 `[country code]` may be set to:
