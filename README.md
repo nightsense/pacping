@@ -1,12 +1,13 @@
 # pacping
 Compare response times of Arch Linux mirrors.
 
-`pacping all http 4` will compare http/ipv4 servers in all countries
-`pacping IS https 6` will compare https/ipv6 servers in Iceland
-
 ## usage
 
 pacping [country code] [protocol] [ipv]
+
+examples:
+- `pacping all http 4` will compare http/ipv4 servers in all countries
+- `pacping IS https 6` will compare https/ipv6 servers in Iceland
 
 ## country code
 
