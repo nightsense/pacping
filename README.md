@@ -15,7 +15,7 @@ Response times are reported in milliseconds. Each is the average of three pings.
 
 `[country code]` may be set to:
 - `all` (to compare mirrors across the world)
-- a specific two-letter country code (to compare mirrors within a single country).
+- a specific two-letter country code (to compare mirrors within a single country)
 
 Run `pacping --country-codes` for an up-to-date list of countries hosting Arch mirrors, along with their codes.
 
