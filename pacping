@@ -2,89 +2,116 @@
 
 rm /tmp/pacping* > /dev/null 2>&1
 
-if [ $# -lt 1 ] || [ $1 = "-h" ] || [ $1 = "--help" ]; then
-    echo "pacping compares the response times of Arch Linux mirrors."
-    echo
-    echo "Usage: pacping [country code] [protocol] [ipv]"
-    echo
-    echo "[country code] may be set to 'all' (to compare mirrors across the"
-    echo "world), or to a specific two-letter country code (to compare"
-    echo "mirrors within a single country; run 'pacping --country-codes' for"
-    echo "an up-to-date list of countries hosting Arch mirrors, along with"
-    echo "their codes)."
-    echo
-    echo "[protocol] may be set to 'http' or 'https'."
-    echo
-    echo "[ipv] may be set to '4' or '6'."
-    echo
-    echo "Examples:"
-    echo "'pacping all http 4' (compare http/ipv4 servers in all countries)"
-    echo "'pacping IS https 6' (compare https/ipv6 servers in Iceland)"
-    exit 0
-fi
+usage() {
+    cat <<EOF
 
-if [ $1 = "--country-codes" ]; then
-    curl -s https://www.archlinux.org/mirrorlist/ | grep "<option" | tail -n +2 | sed 's/<o.*e="//' | sed 's/">/ /' | sed 's/<.*//'
-    exit 0
-fi
+  USAGE
 
-error_append()
-{
-    echo "usage: pacping [country] [protocol] [ipv] (see 'pacping --help')"
+  # compare response times of Arch Linux mirrors
+  pacping COUNTRYCODE PROTOCOL IPV
+
+  # list countries (including country codes) that have Arch Linux mirrors
+  pacping -c
+
+
+  DETAILS
+
+  COUNTRYCODE may be set to 'all' (to compare mirrors worldwide) or a specific
+  two-letter country code (to compare mirrors within a single country).
+
+  PROTOCOL may be set to 'http' or 'https'.
+
+  IPV may be set to '4' or '6'.
+
+
+  EXAMPLES
+
+  # compare http+ipv4 servers in all countries
+  pacping all http 4
+
+  # compare https+ipv6 servers in Iceland
+  pacping is https 6
+
+EOF
+}
+
+error_append() {
+    echo "usage: pacping COUNTRYCODE PROTOCOL IPV (see 'pacping --help')"
     exit 1
 }
 
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+    usage
+    exit 0
+fi
+
+if [ "$1" = '-c' ]; then
+    curl -s https://www.archlinux.org/mirrorlist/ | grep '<o' | tail -n +2 | sed 's/<o.*="//' | \
+        sed 's/">/  /' | sed 's/<.*//' | tr '[:upper:]' '[:lower:]'
+    exit 0
+fi
+
 if [ $# -ne 3 ]; then
-    echo "error: invalid command"
+    echo 'error: invalid command'
     error_append
 fi
 
-
-if [ $1 != "all" ]; then
-    if echo $1 | grep -v ^[A-Z].$ > /dev/null 2>&1; then
-        echo "error: invalid country code format"
-        echo "run 'pacping --country-codes' for an up-to-date list"
+if [ "$1" != 'all' ]; then
+    if echo "$1" | grep -v '^[a-zA-Z]\{2\}$' > /dev/null 2>&1; then
+        echo 'error: invalid country code format'
         error_append
     fi
 fi
 
-if [ $2 != "http" ] && [ $2 != "https" ]; then
-    echo "error: second argument [protocol] must be 'http' or 'https'"
+if [ "$2" != 'http' ] && [ "$2" != 'https' ]; then
+    echo "error: PROTOCOL must be 'http' or 'https'"
     error_append
 fi
 
-if [ $3 != "4" ] && [ $3 != "6" ]; then
-    echo "error: third argument [ipv] must be '4' or '6'"
+if [ "$3" != '4' ] && [ "$3" != '6' ]; then
+    echo "error: IPV must be '4' or '6'"
     error_append
 fi
 
-curl -s -o /tmp/pacping-mirrors "https://www.archlinux.org/mirrorlist/?country=$1&protocol=$2&ip_version=$3"
+code=$(echo $1 | tr '[:lower:]' '[:upper:]')
 
-while true; do
-    if test -e /tmp/pacping-mirrors; then
-        break
-    else
-        sleep 1
-    fi
-done
+curl -s -o /tmp/pacping-mirrors \
+    "https://www.archlinux.org/mirrorlist/?country=$code&protocol=$2&ip_version=$3"
 
-if cat /tmp/pacping-mirrors | grep DOCTYPE > /dev/null; then
-    echo "pacping error: no mirrors found (invalid country code?)"
-    echo "for an up-to-date list of country codes, run 'pacping --country-codes'"
+if ! test -e /tmp/pacping-mirrors; then
+    echo 'mirror list download failed'
     exit 1
+fi
+
+if cat /tmp/pacping-mirrors | grep 'DOCTYPE' > /dev/null; then
+    echo "pacping error: no mirrors found (invalid country code?)"
+    error_append
 fi
 
 cat /tmp/pacping-mirrors | grep Server | sed 's#.*//##' | sed 's#/.*##' > /tmp/pacping-domains
 readarray domains < /tmp/pacping-domains
 
 if [ ${#domains[@]} -eq 0 ]; then
-   echo "No $2 ipv$3 mirrors found in $1."
-   exit 0
+    country=$(curl -s https://www.archlinux.org/mirrorlist/ | grep $code | sed 's/.*">//' \
+        | sed 's/<.*//')
+    echo "No $2 ipv$3 mirrors found in $country."
+    exit 0
 fi
 
 for i in "${domains[@]}"; do
     echo $i >> /tmp/pacping-pings
-    ping -c3 $i | tail -1 | perl -pe 's|.*?[0-9]/||' | sed 's#/.*##' >> /tmp/pacping-pings
+    echo "pinging $(echo $i)..."
+    ping -c3 -W1 $i | tail -1 | perl -pe 's|.*?[0-9]/||' | sed 's#/.*##' >> /tmp/pacping-pings
 done
 
-cat /tmp/pacping-pings | sed 's/^\s*$/failed/' | paste -d ' ' - - | sort -t ' ' -k 2 -g | column -t
+cat /tmp/pacping-pings | sed 's/^\s*$/timeout/' | paste -d ' ' - - | sort -t ' ' -k 2 -g | \
+    column -t > /tmp/pacping-results
+echo -e "\nMIRROR RESPONSE TIMES (average of 3 pings, in milliseconds)"
+cat /tmp/pacping-results
+
+echo -e "\nMIRROR CONFIGURATION LINES (for /etc/pacman.conf)"
+cat /tmp/pacping-mirrors | grep Server | sed 's/#//' > /tmp/pacping-servers
+for l in `seq $(cat /tmp/pacping-results | sed '/timeout/d' | wc -l)`; do
+    cat /tmp/pacping-servers | grep $(cat /tmp/pacping-results | sed '/timeout/d' | \
+        sed 's/ .*//' | sed -n "$l p")
+done

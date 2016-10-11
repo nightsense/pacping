@@ -1,28 +1,28 @@
 # pacping
+
 Compare response times of Arch Linux mirrors.
 
-## usage
+## Usage
 
-`pacping [country code] [protocol] [ipv]`
+### compare response times of Arch Linux mirrors
+pacping COUNTRYCODE PROTOCOL IPV
 
-examples:
-- `pacping all http 4` will compare http/ipv4 servers in all countries
-- `pacping IS https 6` will compare https/ipv6 servers in Iceland
+### list countries (including country codes) that have Arch Linux mirrors
+pacping -c
 
-Response times are reported in milliseconds. Each is the average of three pings.
+## Details
 
-## country code
+COUNTRYCODE may be set to 'all' (to compare mirrors worldwide) or a specific
+two-letter country code (to compare mirrors within a single country).
 
-`[country code]` may be set to:
-- `all` (to compare mirrors across the world)
-- a specific two-letter country code (to compare mirrors within a single country)
+PROTOCOL may be set to 'http' or 'https'.
 
-Run `pacping --country-codes` for an up-to-date list of countries hosting Arch mirrors, along with their codes.
+IPV may be set to '4' or '6'.
 
-## protocol
+## Examples
 
-`[protocol]` may be set to `http` or `https`.
+### compare http+ipv4 servers in all countries
+pacping all http 4
 
-## ipv
-
-`[ipv]` may be set to `4` or `6`.
+### compare https+ipv6 servers in Iceland
+pacping is https 6
