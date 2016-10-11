@@ -4,10 +4,10 @@ Compare response times of Arch Linux mirrors.
 
 ## Usage
 
-### compare response times of Arch Linux mirrors
+**compare response times of Arch Linux mirrors**
 pacping COUNTRYCODE PROTOCOL IPV
 
-### list countries (including country codes) that have Arch Linux mirrors
+**list countries (including country codes) that have Arch Linux mirrors**
 pacping -c
 
 ## Details
@@ -21,8 +21,8 @@ IPV may be set to '4' or '6'.
 
 ## Examples
 
-### compare http+ipv4 servers in all countries
+**compare http+ipv4 servers in all countries**
 pacping all http 4
 
-### compare https+ipv6 servers in Iceland
+**compare https+ipv6 servers in Iceland**
 pacping is https 6
